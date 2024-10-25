@@ -1,5 +1,6 @@
 name: Create Repository from Template
 on:
+  push:
   workflow_dispatch: # Allows manual triggering of the workflow
 
 jobs:
