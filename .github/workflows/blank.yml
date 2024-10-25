@@ -13,7 +13,7 @@ jobs:
       - name: Authenticate with GitHub CLI
         env:
           TOKEN: ${{ secrets.TOKEN }}
-        run: gh auth setup-git
+        run: gh auth login -h github.com
 
       - name: Create Repository from Template
         env:
