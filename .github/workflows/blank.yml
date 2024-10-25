@@ -11,12 +11,12 @@ jobs:
 
       - name: Authenticate with GitHub CLI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: gh auth setup-git
 
       - name: Create Repository from Template
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           TEMPLATE_REPO_OWNER="FathAllaTechOps"
           TEMPLATE_REPO_NAME="template"
@@ -25,7 +25,7 @@ jobs:
 
       - name: Configure Repository Settings
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           gh api -X PATCH "repos/:owner/$NEW_REPO_NAME" \
             -f default_branch='main' \
@@ -35,13 +35,13 @@ jobs:
 
       # - name: Add Secrets to New Repository
       #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     TOKEN: ${{ secrets.TOKEN }}
       #   run: |
       #     gh secret set MY_SECRET --repo "your-username/$NEW_REPO_NAME" --body "secret_value"
 
       - name: Configure Branch Protection for Main Branch
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           gh api -X PUT "repos/:owner/$NEW_REPO_NAME/branches/main/protection" \
             -f required_status_checks.contexts='["status_check"]' \
