@@ -1,0 +1,49 @@
+name: Create Repository from Template
+on:
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  create-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh auth setup-git
+
+      - name: Create Repository from Template
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TEMPLATE_REPO_OWNER="FathAllaTechOps"
+          TEMPLATE_REPO_NAME="template"
+          NEW_REPO_NAME="repo-from-temp"
+          gh repo create "$NEW_REPO_NAME" --template "$TEMPLATE_REPO_OWNER/$TEMPLATE_REPO_NAME" --public
+
+      - name: Configure Repository Settings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X PATCH "repos/:owner/$NEW_REPO_NAME" \
+            -f default_branch='main' \
+            -f has_issues=true \
+            -f has_projects=true \
+            -f has_wiki=true
+
+      # - name: Add Secrets to New Repository
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     gh secret set MY_SECRET --repo "your-username/$NEW_REPO_NAME" --body "secret_value"
+
+      - name: Configure Branch Protection for Main Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X PUT "repos/:owner/$NEW_REPO_NAME/branches/main/protection" \
+            -f required_status_checks.contexts='["status_check"]' \
+            -f enforce_admins=true \
+            -f required_pull_request_reviews.dismiss_stale_reviews=true
