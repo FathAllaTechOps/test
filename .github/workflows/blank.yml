@@ -11,9 +11,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Authenticate with GitHub CLI
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-        run: gh auth login -h github.com
+        run: |
+          echo ${{ secrets.TOKEN }} >  mytoken.txt
+          gh auth login -h github.com -p https --with-token < mytoken.txt
 
       - name: Create Repository from Template
         env:
