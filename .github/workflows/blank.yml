@@ -1,50 +1,39 @@
-name: Create Repository from Template
+name: Manage Repository
+
 on:
-  push:
-  workflow_dispatch: # Allows manual triggering of the workflow
+  workflow_dispatch:
+    inputs:
+      repository_name:
+        description: 'The name of the repository to create or delete'
+        required: true
+      action:
+        description: 'Action to perform: create or delete'
+        required: true
+        type: choice
+        default: 'create'
+        options:
+          - create
+          - delete
 
 jobs:
-  create-repo:
+  manage-repo:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Check action type
+      id: action_type
+      run: echo "ACTION_TYPE=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
 
-      - name: Authenticate with GitHub CLI
-        run: |
-          echo ${{ secrets.TOKEN }} >  mytoken.txt
-          gh auth login -h github.com -p https --with-token < mytoken.txt
+    - name: Create Repository
+      if: ${{ steps.action_type.outputs.ACTION_TYPE == 'create' }}
+      run: |
+        curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/orgs/YOUR_ORG_NAME/repos \
+        -d "{\"name\":\"${{ github.event.inputs.repository_name }}\"}"
 
-      - name: Create Repository from Template
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-        run: |
-          TEMPLATE_REPO_OWNER="FathAllaTechOps"
-          TEMPLATE_REPO_NAME="template"
-          NEW_REPO_NAME="repo-from-temp"
-          gh repo create "$NEW_REPO_NAME" --template "$TEMPLATE_REPO_OWNER/$TEMPLATE_REPO_NAME" --public
-
-      - name: Configure Repository Settings
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-        run: |
-          gh api -X PATCH "repos/:owner/$NEW_REPO_NAME" \
-            -f default_branch='main' \
-            -f has_issues=true \
-            -f has_projects=true \
-            -f has_wiki=true
-
-      # - name: Add Secrets to New Repository
-      #   env:
-      #     TOKEN: ${{ secrets.TOKEN }}
-      #   run: |
-      #     gh secret set MY_SECRET --repo "your-username/$NEW_REPO_NAME" --body "secret_value"
-
-      - name: Configure Branch Protection for Main Branch
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-        run: |
-          gh api -X PUT "repos/:owner/$NEW_REPO_NAME/branches/main/protection" \
-            -f required_status_checks.contexts='["status_check"]' \
-            -f enforce_admins=true \
-            -f required_pull_request_reviews.dismiss_stale_reviews=true
+    - name: Delete Repository
+      if: ${{ steps.action_type.outputs.ACTION_TYPE == 'delete' }}
+      run: |
+        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/YOUR_ORG_NAME/${{ github.event.inputs.repository_name }}
