@@ -6,6 +6,7 @@ on:
       repository_name:
         description: 'The name of the repository to create or delete'
         required: true
+        default: 'new-repo'
       action:
         description: 'Action to perform: create or delete'
         required: true
@@ -19,6 +20,10 @@ jobs:
   manage-repo:
     runs-on: ubuntu-latest
     steps:
+    - name: Install GitHub CLI
+      run: |
+        sudo apt-get install -y gh
+        gh auth login --with-token <<< "${{ secrets.TOKEN }}"
     - name: Check action type
       id: action_type
       run: echo "ACTION_TYPE=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
@@ -26,14 +31,21 @@ jobs:
     - name: Create Repository
       if: ${{ steps.action_type.outputs.ACTION_TYPE == 'create' }}
       run: |
-        curl -X POST -H "Authorization: token ${{ secrets.TOKEN }}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/orgs/FathAllaTechOps/repos \
-        -d "{\"name\":\"${{ github.event.inputs.repository_name }}\"}"
+        gh api --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /orgs/FathAllaTechOps/repos \
+          -f name="${{ github.event.inputs.repository_name }}" \
+          -f description="Repository created by workflow" \
+          -F private=false \
+          -F has_issues=true \
+          -F has_projects=true \
+          -F has_wiki=true
 
     - name: Delete Repository
       if: ${{ steps.action_type.outputs.ACTION_TYPE == 'delete' }}
       run: |
-        curl -X DELETE -H "Authorization: token ${{ secrets.TOKEN }}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/FathAllaTechOps/${{ github.event.inputs.repository_name }}
+        gh api --method DELETE \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/FathAllaTechOps/${{ github.event.inputs.repository_name }}
