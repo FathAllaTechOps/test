@@ -151,7 +151,7 @@ jobs:
       - name: Create Development Branch
         run: |
           git checkout -b development
-          cp -r ../$(jq -r '.technology' stack.json)/* .
+          cp -r ../$(jq -r '.technology' ../stack.json)/* .
           git add .
           git commit -m "Initiate the repository structure"
           git push --set-upstream origin development
