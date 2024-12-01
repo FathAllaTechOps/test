@@ -146,6 +146,7 @@ jobs:
         with:
           repository: ${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}
           token: ${{ secrets.TOKEN }}
+          path: ${{ env.REPO_NAME }}
       
       - name: ls
         run: ls
@@ -153,11 +154,14 @@ jobs:
       - name: Create Development Branch
         run: |
           echo "##########"  
-          cd ..
+          cd ${{ env.REPO_NAME }}
           ls
           echo "##########"  
           git checkout -b development
           cp -r ../${{ env.TECH_STACK }}/* .
+          echo "##########"  
+          ls
+          echo "##########"
           git add .
           git commit -m "Initiate the repository structure"
           git push --set-upstream origin development
