@@ -133,6 +133,33 @@ jobs:
             -f name="${{ env.REPO_NAME }}" \
             -f description="${{ github.event.inputs.project_description }}" \
             -F include_all_branches=false 
+
+      - name: Create Development Branch
+        run: |
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}/branches \
+            -f ref=main \
+            -f sha=$(gh api /repos/${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}/git/ref/heads/main | jq -r '.object.sha') \
+            -f branch=development
+
+      - name: Unzip the repository structure file
+        run: unzip $(jq -r '.technology' stack.json).zip
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}
+          ref: development
+      - name: Copy the repository structure to the new repository
+        run: |
+          cp -r $(jq -r '.technology' stack.json)/* ${{ env.REPO_NAME }}
       
+      - name: Commit the changes
+        run: |
+          git add .
+          git commit -m "Initial commit"
+          git push
 
 
