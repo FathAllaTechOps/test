@@ -153,7 +153,7 @@ jobs:
       - name: Create Development Branch
         run: |
           echo "##########"  
-          cd
+          cd ..
           ls
           echo "##########"  
           git checkout -b development
