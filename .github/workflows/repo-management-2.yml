@@ -118,6 +118,8 @@ jobs:
               echo "TEMPLATE_REPO=vbitdc-repository-template" >> $GITHUB_ENV
               ;;
             esac
+            # Create a Github environment variable from tech stack
+            echo "TECH_STACK=$(jq -r '.technology' stack.json)" >> $GITHUB_ENV
 
       - name: Login to GitHub
         run: echo "${{ secrets.TOKEN }}" | gh auth login -h github.com -p https --with-token
@@ -151,7 +153,7 @@ jobs:
       - name: Create Development Branch
         run: |
           git checkout -b development
-          cp -r ../$(jq -r '.technology' ../stack.json)/* .
+          cp -r ../${{ env.TECH_STACK }}/* .
           git add .
           git commit -m "Initiate the repository structure"
           git push --set-upstream origin development
