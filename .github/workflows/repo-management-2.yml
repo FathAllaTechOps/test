@@ -158,7 +158,7 @@ jobs:
           ls
           echo "##########"  
           git checkout -b development
-          cp -r ../${{ env.TECH_STACK }}/* .
+          cp -r ../${{ github.event.inputs.project_name }}/* .
           echo "##########"  
           ls
           echo "##########"
