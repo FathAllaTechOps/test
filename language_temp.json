@@ -1,0 +1,14 @@
+{
+    "frontend": {
+        "programming_language": "${frontend_programming_language}",
+        "libraries": [
+            "${frontend_libraries}"
+        ]
+    },
+    "backend": {
+        "programming_language": "${backend_programming_language}",
+        "libraries": [
+            "${backend_libraries}"
+        ]
+    }
+}

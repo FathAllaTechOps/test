@@ -1,0 +1,145 @@
+name: Manage Repository
+on:
+  workflow_dispatch:
+    inputs:
+      language_setup:
+        description: 'JSON string specifying the programming language and libraries for backend and frontend'
+        required: true
+        type: string
+      project_name:
+        description: 'The name of the project'
+        required: true
+        # default: 'ecommerce'
+      project_description:
+        description: 'Description of the project'
+        required: false
+        default: ''
+      action:
+        description: 'Action to perform: create, create_from_template, delete, update, grant_access, or revoke_access'
+        required: true
+        type: choice
+        # default: 'create_from_template'
+        options:
+          - create_from_template
+          - grant_access
+          - revoke_access
+      org_name:
+        description: 'GitHub organization or user name'
+        required: false
+        default: 'VFGroup-VBIT'
+      template_owner:
+        description: 'Owner of the template repository (only used for create_from_template action)'
+        required: false
+        default: 'VFGroup-VBIT'
+      homepage:
+        description: 'Repository homepage URL'
+        required: false
+        default: 'https://github.com'
+      github_team_name:
+        description: 'Name of the GitHub team to grant/revoke access'
+        required: false
+        default: 'vbitdc-sre-admin'
+      role:
+        description: 'Role for the team access (read, triage, write, maintain, admin)'
+        required: true
+        type: choice
+        default: 'admin'
+        options:
+          - read
+          - triage
+          - write
+          - maintain
+          - admin
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    outputs:
+      stack: ${{ steps.parse_json.outputs.stack }}
+    steps:
+      - name: Parse JSON input
+        id: parse_json
+        run: |
+          language_setup='${{ github.event.inputs.language_setup }}'
+          stack=$(echo $language_setup | jq -r 'keys | @json')
+          echo "stack=$stack" >> $GITHUB_OUTPUT
+
+
+  manage-repo:
+    runs-on: self-hosted
+    needs: setup
+    strategy:
+      matrix:
+        stack: ${{fromJson(needs.setup.outputs.stack)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Parse JSON input
+        id: parse_json
+        run: |
+          # save the input to a file
+          echo ${{ github.event.inputs.language_setup }} >> language_setup.json 
+
+          # format the input and save it to a file "formated_language_setup.json"
+          python3 json.py 
+      
+      - name: Check
+        run: cat formated_language_setup.json
+
+      - name: Install GitHub CLI
+        run: |
+          curl -sL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /usr/share/keyrings/githubcli-archive-keyring.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install gh -y
+
+      - name: Login to GitHub
+        run: echo "${{ secrets.TOKEN }}" | gh auth login -h github.com -p https --with-token
+
+      # - name: Set Action Type
+      #   run: echo "ACTION_TYPE=${{ github.event.inputs.action }}" >> $GITHUB_ENV
+
+      # - name: Create Repository from Template
+      #   if: ${{ github.event.inputs.action == 'create_from_template' }}
+      #   run: |
+      #     gh api --method POST \
+      #       -H "Accept: application/vnd.github+json" \
+      #       -H "X-GitHub-Api-Version: 2022-11-28" \
+      #       /repos/${{ github.event.inputs.template_owner }}/${{ env.TEMPLATE_REPO }}/generate \
+      #       -f owner="${{ github.event.inputs.org_name }}" \
+      #       -f name="${{ github.event.inputs.repository_name }}" \
+      #       -f description="${{ github.event.inputs.description }}" \
+      #       -F include_all_branches=false \
+      #       -F private=true
+      
+      # - name: Create NPMRC secrets in the new repository in case of TEMPLATE_REPO == react
+      #   if: ${{ github.event.inputs.programming_language == 'react' }}
+      #   run: |
+      #     gh secret set -R ${{ github.event.inputs.org_name }}/${{ github.event.inputs.repository_name }} NPMRC -b ${{ secrets.NPMRC }}
+
+      # - name: Grant Access to Team
+      #   if: ${{ github.event.inputs.action == 'create_from_template' }}
+      #   run: |
+      #     gh api --method PUT \
+      #       -H "Accept: application/vnd.github+json" \
+      #       -H "X-GitHub-Api-Version: 2022-11-28" \
+      #       /orgs/${{ github.event.inputs.org_name }}/teams/${{ github.event.inputs.team_name }}/repos/${{ github.event.inputs.org_name }}/${{ github.event.inputs.repository_name }} \
+      #       -f permission="admin"
+
+      # - name: Grant Repo Access
+      #   if: ${{ env.ACTION_TYPE == 'grant_access' }}
+      #   run: |
+      #     gh api --method PUT \
+      #       -H "Accept: application/vnd.github+json" \
+      #       -H "X-GitHub-Api-Version: 2022-11-28" \
+      #       /orgs/${{ github.event.inputs.org_name }}/teams/${{ github.event.inputs.team_name }}/repos/${{ github.event.inputs.org_name }}/${{ github.event.inputs.repository_name }} \
+      #       -f permission="${{ github.event.inputs.role }}"
+
+      # - name: Revoke Repo Access
+      #   if: ${{ env.ACTION_TYPE == 'revoke_access' }}
+      #   run: |
+      #     gh api --method DELETE \
+      #       -H "Accept: application/vnd.github+json" \
+      #       -H "X-GitHub-Api-Version: 2022-11-28" \
+      #       /orgs/${{ github.event.inputs.org_name }}/teams/${{ github.event.inputs.team_name }}/repos/${{ github.event.inputs.org_name }}/${{ github.event.inputs.repository_name }}
