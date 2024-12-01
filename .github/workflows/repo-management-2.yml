@@ -66,107 +66,109 @@ jobs:
       - name: get env
         run: env
 
-  # manage-repo:
-  #   runs-on: ubuntu-latest
-  #   needs: setup
-  #   strategy:
-  #     matrix:
-  #       stack: ${{fromJson(needs.setup.outputs.stack)}}
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+  manage-repo:
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        stack: ${{fromJson(needs.setup.outputs.stack)}}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
       
-  #     - name: Save the input to a file
-  #       run: |
-  #         echo '${{ github.event.inputs.language_setup }}' >> language_setup.json 
-  #         cat language_setup.json
+      - name: Save the input to a file
+        run: |
+          echo '${{ github.event.inputs.language_setup }}' >> language_setup.json 
+          cat language_setup.json
       
-  #     - name: Extract ${{ matrix.stack }} details into stack.json
-  #       run: |
-  #         echo '${{ github.event.inputs.language_setup }}' | jq '.${{ matrix.stack }}' > stack.json
+      - name: Extract ${{ matrix.stack }} details into stack.json
+        run: |
+          echo '${{ github.event.inputs.language_setup }}' | jq '.${{ matrix.stack }}' > stack.json
 
-  #     - name: Featch the repository structure
-  #       run: |
-  #         # Setup Environment variables
-  #         export PROJECT_NAME=${{ github.event.inputs.project_name }}
-  #         export PROJECT_DESCRIPTION=${{ github.event.inputs.project_description }}
+      - name: Featch the repository structure
+        run: |
+          # Setup Environment variables
+          export PROJECT_NAME=${{ github.event.inputs.project_name }}
+          export PROJECT_DESCRIPTION=${{ github.event.inputs.project_description }}
 
-  #         python3 ./python-scripts/2-send_curl.py
+          python3 ./python-scripts/2-send_curl.py
 
-  #     - name: Setup Repository Parameters
-  #       run: |
-  #         if [ ${{ matrix.stack }} == "frontend" ]; then
-  #           echo "REPO_NAME=vbitdc-${{ github.event.inputs.project_name }}-ui" >> $GITHUB_ENV
-  #         else
-  #           echo "REPO_NAME=vbitdc-${{ github.event.inputs.project_name }}-api" >> $GITHUB_ENV
-  #         fi
+      - name: Setup Repository Parameters
+        run: |
+          if [ ${{ matrix.stack }} == "frontend" ]; then
+            echo "REPO_NAME=vbitdc-${{ github.event.inputs.project_name }}-ui" >> $GITHUB_ENV
+          else
+            echo "REPO_NAME=vbitdc-${{ github.event.inputs.project_name }}-api" >> $GITHUB_ENV
+          fi
 
-  #     - name: Determine Template Repository
-  #       run: |
-  #           case $(jq -r '.technology' stack.json) in
-  #           react)
-  #             echo "TEMPLATE_REPO=vbitdc-repository-template-react" >> $GITHUB_ENV
-  #             ;;
-  #           nodejs)
-  #             echo "TEMPLATE_REPO=vbitdc-repository-template-nodejs" >> $GITHUB_ENV
-  #             ;;
-  #           java)
-  #             echo "TEMPLATE_REPO=vbitdc-repository-template-java" >> $GITHUB_ENV
-  #             ;;
-  #           python)
-  #             echo "TEMPLATE_REPO=vbitdc-repository-template-python" >> $GITHUB_ENV
-  #             ;;
-  #           *)
-  #             echo "TEMPLATE_REPO=vbitdc-repository-template" >> $GITHUB_ENV
-  #             ;;
-  #           esac
-  #           # Create a Github environment variable from tech stack
-  #           echo "TECH_STACK=$(jq -r '.technology' stack.json)" >> $GITHUB_ENV
+      - name: Determine Template Repository
+        run: |
+            case $(jq -r '.technology' stack.json) in
+            react)
+              echo "TEMPLATE_REPO=vbitdc-repository-template-react" >> $GITHUB_ENV
+              ;;
+            nodejs)
+              echo "TEMPLATE_REPO=vbitdc-repository-template-nodejs" >> $GITHUB_ENV
+              ;;
+            java)
+              echo "TEMPLATE_REPO=vbitdc-repository-template-java" >> $GITHUB_ENV
+              ;;
+            python)
+              echo "TEMPLATE_REPO=vbitdc-repository-template-python" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "TEMPLATE_REPO=vbitdc-repository-template" >> $GITHUB_ENV
+              ;;
+            esac
+            # Create a Github environment variable from tech stack
+            echo "TECH_STACK=$(jq -r '.technology' stack.json)" >> $GITHUB_ENV
 
-  #     - name: Login to GitHub
-  #       run: echo "${{ secrets.TOKEN }}" | gh auth login -h github.com -p https --with-token
+      - name: Login to GitHub
+        run: echo "${{ secrets.TOKEN }}" | gh auth login -h github.com -p https --with-token
 
-  #     - name: Create Repository from Template
-  #       if: ${{ github.event.inputs.action == 'create_from_template' }}
-  #       run: |
-  #         gh api --method POST \
-  #           -H "Accept: application/vnd.github+json" \
-  #           -H "X-GitHub-Api-Version: 2022-11-28" \
-  #           /repos/${{ github.event.inputs.template_owner }}/${{ env.TEMPLATE_REPO }}/generate \
-  #           -f owner="${{ github.event.inputs.org_name }}" \
-  #           -f name="${{ env.REPO_NAME }}" \
-  #           -f description="${{ github.event.inputs.project_description }}" \
-  #           -F include_all_branches=false 
+      - name: Create Repository from Template
+        if: ${{ github.event.inputs.action == 'create_from_template' }}
+        run: |
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.event.inputs.template_owner }}/${{ env.TEMPLATE_REPO }}/generate \
+            -f owner="${{ github.event.inputs.org_name }}" \
+            -f name="${{ env.REPO_NAME }}" \
+            -f description="${{ github.event.inputs.project_description }}" \
+            -F include_all_branches=false 
 
-  #     - name: Unzip the repository structure file
-  #       run: unzip $(jq -r '.technology' stack.json).zip
+      - name: Unzip the repository structure file
+        run: unzip $(jq -r '.technology' stack.json).zip
 
-  #     - name: wait for 10 seconds
-  #       run: sleep 10
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: ${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}
-  #         token: ${{ secrets.TOKEN }}
-  #         path: ${{ env.REPO_NAME }}
+      - name: wait for 10 seconds
+        run: sleep 10
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}
+          token: ${{ secrets.TOKEN }}
+          path: ${{ env.REPO_NAME }}
       
-  #     - name: ls
-  #       run: ls
+      - name: ls
+        run: ls
 
-  #     - name: Create Development Branch
-  #       run: |
-  #         echo "##########"  
-  #         cd ${{ env.REPO_NAME }}
-  #         ls
-  #         echo "##########"  
-  #         git checkout -b development
-  #         cp -r ../${{ github.event.inputs.project_name }}/* .
-  #         echo "##########"  
-  #         ls
-  #         echo "##########"
-  #         git add .
-  #         git commit -m "Initiate the repository structure"
-  #         git push --set-upstream origin development
+      - name: Create Development Branch
+        run: |
+          echo "##########"  
+          cd ${{ env.REPO_NAME }}
+          ls
+          echo "##########"  
+          git checkout -b development
+          cp -r ../${{ github.event.inputs.project_name }}/* .
+          echo "##########"  
+          ls
+          echo "##########"
+          git config --global user.email "$GITHUB_ACTOR@github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+          git add .
+          git commit -m "Initiate the repository structure"
+          git push --set-upstream origin development
 
 
 
