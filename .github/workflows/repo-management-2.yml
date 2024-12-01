@@ -151,15 +151,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}
-          ref: development
-      - name: Copy the repository structure to the new repository
+
+      - name: Create Development Branch
         run: |
-          cp -r $(jq -r '.technology' stack.json)/* ${{ env.REPO_NAME }}
-      
-      - name: Commit the changes
-        run: |
+          cd ${{ env.REPO_NAME }}
+          git checkout -b development
+          cp -r ../$(jq -r '.technology' stack.json)/* .
           git add .
-          git commit -m "Initial commit"
-          git push
+          git commit -m "Initiate the repository structure"
+          git push --set-upstream origin development
+
 
 
