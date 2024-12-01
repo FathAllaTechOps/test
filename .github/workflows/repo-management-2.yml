@@ -137,6 +137,8 @@ jobs:
       - name: Unzip the repository structure file
         run: unzip $(jq -r '.technology' stack.json).zip
 
+      - name: wait for 10 seconds
+        run: sleep 10
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
