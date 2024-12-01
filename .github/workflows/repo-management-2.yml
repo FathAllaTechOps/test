@@ -152,6 +152,9 @@ jobs:
 
       - name: Create Development Branch
         run: |
+          echo "##########"  
+          ls
+          echo "##########"  
           git checkout -b development
           cp -r ../${{ env.TECH_STACK }}/* .
           git add .
