@@ -144,10 +144,12 @@ jobs:
         with:
           repository: ${{ github.event.inputs.org_name }}/${{ env.REPO_NAME }}
           token: ${{ secrets.TOKEN }}
+      
+      - name: ls
+        run: ls
 
       - name: Create Development Branch
         run: |
-          cd ${{ env.REPO_NAME }}
           git checkout -b development
           cp -r ../$(jq -r '.technology' stack.json)/* .
           git add .
