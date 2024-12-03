@@ -28,7 +28,8 @@ payload = {
     "coreOptions": {
         "includeExampleApp": True,
         "monoRepoOption": "STANDARD_APP",
-        "djrEnabled": False
+        "djrEnabled": False,
+        "djrApiUrl": "https://api.example.com"
     },
     "libraries": libraries,
     "technology": technology.lower()

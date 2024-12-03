@@ -116,6 +116,9 @@ jobs:
             python)
               echo "TEMPLATE_REPO=vbitdc-repository-template-python" >> $GITHUB_ENV
               ;;
+            nextjs)
+              echo "TEMPLATE_REPO=vbitdc-repository-template-nextjs" >> $GITHUB_ENV
+              ;;
             *)
               echo "TEMPLATE_REPO=vbitdc-repository-template" >> $GITHUB_ENV
               ;;
@@ -167,7 +170,7 @@ jobs:
           git config --global user.email "$GITHUB_ACTOR@github.com"
           git config --global user.name "$GITHUB_ACTOR"
           git add .
-          git commit -m "Initiate the repository structure"
+          git commit -m "Initiate the repository structure :tada: "
           git push --set-upstream origin development
 
 
