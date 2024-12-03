@@ -90,8 +90,8 @@ jobs:
           # Setup Environment variables
           export PROJECT_NAME=${{ github.event.inputs.project_name }}
           export PROJECT_DESCRIPTION=${{ github.event.inputs.project_description }}
-
-          python3 ./python-scripts/2-send_curl.py
+          export Technology=$(jq -r '.technology' stack.json)
+          python3 ./python-scripts/$Technology.py
 
       - name: Setup Repository Parameters
         run: |
