@@ -7,8 +7,8 @@ with open('stack.json', 'r') as f:
     stack_data = json.load(f)
 
 # Extract project details from stack.json
-project_name = stack_data.get("project_name")
-project_description = stack_data.get("project_description")
+project_name = os.environ.get('PROJECT_NAME')
+project_description = os.environ.get('PROJECT_DESCRIPTION')
 
 # Extract technology and libraries
 technology = "react"  # Based on your input, we know it's React
